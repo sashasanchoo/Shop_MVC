@@ -1,0 +1,87 @@
+﻿@using ASP.NET_Blog_MVC_Identity.Data
+@using Microsoft.EntityFrameworkCore
+@using X.PagedList.Mvc.Core
+@using X.PagedList.Web.Common
+@model X.PagedList.IPagedList<Post>
+@{
+    ViewData["Title"] = "Home page";
+    Layout = "_customLayout";
+}
+     
+<!-- Page header with logo and tagline-->
+@section header
+{
+    <header class="py-5 bg-light border-bottom mb-4">
+        <div class="container">
+            <div class="text-center my-5">
+                <h1 class="fw-bolder">Archives Explorer</h1>
+                <p class="lead mb-0">Archived memories and garments.</p>
+            </div>
+        </div>
+    </header>
+}
+
+<!-- Page content-->
+<div class="col-lg-8">
+    <div class="row">
+            @for (int postNumber = 0; postNumber < Model.Count; postNumber++)
+            {
+                <div class="col-lg-6">
+                         <div class="card mb-4">
+                            <a asp-action="Post" asp-route-postId="@Model.ToList()[postNumber].Id"><img class="card-img-top" height="350" src="/Images/@Model.ToList()[postNumber].ImagePath" alt="..." /></a>
+                            <div class="card-body">
+                                <div class="small text-muted">@Model.ToList()[postNumber].Published.ToShortDateString()</div>
+                                <h2 class="card-title h4">@Model.ToList()[postNumber].Title</h2>
+                                <p class="card-text">@Model.ToList()[postNumber].Content.Split(' ').Take(20).Aggregate((a,b) => a + ' ' + b)</p>
+                                <p>Category: @string.Join(',', Model.ToList()[postNumber].Category.Name)</p>
+                                <a class="btn btn-primary" asp-action="Post" asp-route-postId="@Model.ToList()[postNumber].Id">Read more →</a>
+                            </div>
+                        </div>
+                    </div>       
+            }
+                            
+<!-- Pagination-->
+        <nav aria-label="Pagination">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new {page, categoryName = ViewBag.CategoryName}), new PagedListRenderOptions{
+                    ContainerDivClasses = new string[] {"pagination justify-content-center my-4"},
+                    LiElementClasses = new string[] {"page-item"},
+                    PageClasses = new string[]{"page-link"},
+                    LinkToFirstPageFormat = "1",
+                    LinkToLastPageFormat = Model.PageCount.ToString(),
+                    DisplayLinkToFirstPage = PagedListDisplayMode.IfNeeded,
+                    DisplayLinkToLastPage = PagedListDisplayMode.IfNeeded,
+                    MaximumPageNumbersToDisplay = 3,
+                    EllipsesElementClass = "page-item disabled",
+                    DisplayLinkToNextPage = PagedListDisplayMode.Never,
+                    DisplayLinkToPreviousPage = PagedListDisplayMode.Never
+                })
+        </nav>
+    </div>
+</div>
+@section div{
+<div class="col-lg-4">
+<!-- Search widget-->
+<div class="card mb-4">
+    <div class="card-header">Search</div>
+    <div class="card-body">
+        <form method="post" asp-action="Search" class="input-group"> 
+            <input class="form-control" type="text" placeholder="Enter search term..." aria-label="Enter search term..." aria-describedby="button-search" id="postTitle" name="postTitle"/>
+            <input class="btn btn-primary" id="button-search" type="submit" value="Search"/>
+        </form>
+    </div>
+</div>
+<!-- Categories widget-->
+<div class="card mb-4">
+    <div class="card-header">Categories</div>
+    <div class="card-body">
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start">
+            @for(int categoryNumber = 0; categoryNumber < ((IEnumerable<Category>)ViewBag.Categories).ToList().Count; categoryNumber++)
+                    {
+                        <a style="margin: 2px" class="btn btn-light" asp-action="Index" asp-route-categoryName=@(((IEnumerable<Category>)ViewBag.Categories).ToList()[categoryNumber].Name)>@(((IEnumerable<Category>)ViewBag.Categories).ToList()[categoryNumber].Name)</a>
+                    }
+        </div>
+    </div>
+</div>
+</div>
+}
+

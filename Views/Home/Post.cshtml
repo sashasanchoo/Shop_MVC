@@ -1,0 +1,80 @@
+﻿@using Microsoft.EntityFrameworkCore;
+@model PostCommentViewModel
+@{
+    Layout = "_customLayout";
+}
+<div class="col-lg-8">
+    <!-- Post content-->
+    <article>
+        <!-- Post header-->
+        <header class="mb-4">
+            <!-- Post title-->
+            <h1 class="fw-bolder mb-1 d-sm-flex justify-content-between">
+                @Model.Post.Title
+                <a class="btn btn-dark" asp-action="Buy" asp-route-id="@Model.Post.Id">Buy</a>
+                </h1>
+            <!-- Post meta content-->
+            <div class="text-muted fst-italic mb-2">@Model.Post.Published.ToShortDateString()</div>
+            <!-- Post categories-->
+            <a asp-action="Index" asp-route-categoryName=@(Model.Post.Category.Name) class="badge bg-secondary text-decoration-none link-light">@Model.Post.Category.Name</a>
+        </header>
+        <!-- Preview image figure-->
+        <figure class="mb-4"><img class="img-fluid rounded" src="/Images/@Model.Post.ImagePath" alt="..." /></figure>
+        <!-- Post content-->
+        <section class="mb-5">
+            <p class="fs-5 mb-4">@Model.Post.Content</p>
+        </section>
+    </article>
+    <!-- Comments section-->
+    <section class="mb-5">
+        <div class="card bg-light">
+            <div class="card-body">
+                <!-- Comment form-->
+                <form class="mb-4" asp-action="PublishComment" asp-controller="Home">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <input type="hidden" asp-for="@Model.Post.Id" value="@Model.Post.Id"/>
+                        <textarea class="form-control" rows="3" placeholder="Join the discussion and leave a comment!" type="text" asp-for="@Model.Comment.Content"></textarea>
+                        <input class="btn btn-primary" id="button-search" type="submit" value="Publish"/>
+                        <span asp-validation-for="@Model.Comment.Content" class="field-validation-error"></span>
+                    </div>
+
+                </form>
+                <!-- Single comment-->
+                @foreach(var comment in Model.Post.Comments.OrderByDescending(p => p.Published))
+                {
+                     <div class="d-flex">
+                        <div class="flex-shrink-0"><img class="rounded-circle" src="https://dummyimage.com/50x50/ced4da/6c757d.jpg" alt="..." /></div>
+                            <div class="ms-3">
+                                <div class="fw-bold">@comment.User.UserName <span class="text-muted fst-italic mb-2">@comment.Published.ToShortDateString()</span></div>
+                                @comment.Content
+                            </div>
+                     </div>
+                }
+               
+            </div>
+        </div>
+    </section>
+</div>
+@section div{
+<div class="col-lg-4">
+<!-- Search widget-->
+<div class="card mb-4">
+    <div class="card-header">Search</div>
+    <div class="card-body">
+        <form method="post" asp-action="Search" class="input-group"> 
+            <input class="form-control" type="text" placeholder="Enter search term..." aria-label="Enter search term..." aria-describedby="button-search" id="postTitle" name="postTitle"/>
+            <input class="btn btn-primary" id="button-search" type="submit" value="Search"/>
+        </form>
+    </div>
+</div>
+</div>
+}
+@section scripts{
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
+
+
+
+

@@ -1,0 +1,41 @@
+﻿@model IEnumerable<ASP.NET_Blog_MVC_Identity.Models.Post>
+@{
+    ViewData["Title"] = "Index";
+}
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Title)</th>
+            <th>@Html.DisplayNameFor(model => model.Price)</th>
+            <th>@Html.DisplayNameFor(model => model.Published)</th>
+            <th>@Html.DisplayNameFor(model => model.ImagePath)</th>
+            <th>@Html.DisplayNameFor(model => model.Content)</th>
+            <th>@Html.DisplayNameFor(model => model.Category)</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var post in Model) 
+{
+    <tr>
+        <td>@post.Title</td>
+        <td>@post.Price</td>
+        <td>@post.Published.ToShortDateString()</td>
+        <td>@post.ImagePath</td>
+        <td>@post.Content</td>
+        <td>@post.Category.Name</td>
+        <td>
+            <a asp-action="Edit" asp-route-id="@post.Id">Edit</a> |
+            <a asp-action="Details" asp-route-id="@post.Id">Details</a> |
+            <a asp-action="Delete" asp-route-id="@post.Id">Delete</a>
+        </td>
+    </tr>
+}
+    </tbody>
+</table>
+<div>
+    <a asp-action="Index" asp-controller="Home">Back to List</a>
+</div>
