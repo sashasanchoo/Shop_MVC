@@ -17,19 +17,22 @@ namespace ASP.NET_Blog_MVC_Identity.Areas.Admin
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
-        private const string _imageDir = "images";
-        private readonly string _imagesPath;
-        public PostsController(ApplicationDbContext context, IWebHostEnvironment environment)
+        private readonly IConfiguration _configuration;
+        private readonly string _imagesDirectory;
+        private readonly string _imagesFullPath;
+        public PostsController(ApplicationDbContext context, IWebHostEnvironment environment, IConfiguration configuration)
         {
             _context = context;
             _environment = environment;
-            _imagesPath = Path.Combine(_environment.WebRootPath, _imageDir);
+            _configuration = configuration;
+            _imagesDirectory = configuration.GetValue<string>("StaticFilesDirectory");
+            _imagesFullPath = Path.Combine(_environment.WebRootPath, _imagesDirectory);
         }
 
         // GET: Admin/Posts
         public async Task<IActionResult> Index()
         {
-              return View(await _context.Posts.Include("Category").ToListAsync());
+            return View(await _context.Posts.Include("Category").ToListAsync());
         }
 
         // GET: Admin/Posts/Details/5
@@ -63,10 +66,10 @@ namespace ASP.NET_Blog_MVC_Identity.Areas.Admin
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Title, Price, Published, ImagePath, Content, Category")] Post post, IFormFile image)
         {
-            if(!string.IsNullOrEmpty(image.FileName) && ModelState.IsValid)
+            if (!string.IsNullOrEmpty(image.FileName) && ModelState.IsValid)
             {
                 var category = await _context.Categories.Include("Posts").Where(cat => cat.Name == post.Category.Name).FirstOrDefaultAsync();
-                if(category == null)
+                if (category == null)
                 {
                     return BadRequest($"Category \"{post.Category.Name}\" does not exist");
                 }
@@ -74,18 +77,12 @@ namespace ASP.NET_Blog_MVC_Identity.Areas.Admin
                 {
                     post.Category = category;
                     post.ImagePath = image.FileName;
-                    if (!System.IO.File.Exists(image.FileName))
-                    {
-                        await using (var file = new FileStream(Path.Join(_imagesPath, image.FileName), FileMode.Create, FileAccess.Write))
-                        {
-                            await image.CopyToAsync(file);
-                        }
-                    }
                     _context.Posts.Add(post);
                     await _context.SaveChangesAsync();
+                    await TryCopyImage(image);
                     return RedirectToAction(nameof(Index));
                 }
-            }        
+            }
             return View(post);
         }
 
@@ -134,8 +131,8 @@ namespace ASP.NET_Blog_MVC_Identity.Areas.Admin
                         postToUpdate.Published = post.Published;
                         postToUpdate.Content = post.Content;
                         postToUpdate.ImagePath = image.FileName;
-                        CopyImage(image);
                         _context.Update(postToUpdate);
+                        await TryCopyImage(image);
                         await _context.SaveChangesAsync();
                     }
 
@@ -188,24 +185,28 @@ namespace ASP.NET_Blog_MVC_Identity.Areas.Admin
             {
                 _context.Posts.Remove(post);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool PostExists(int? id)
         {
-          return _context.Posts.Any(e => e.Id == id);
+            return _context.Posts.Any(e => e.Id == id);
         }
-        private async void CopyImage(IFormFile image)
+        private async Task TryCopyImage(IFormFile image)
         {
-            if (!System.IO.File.Exists(image.FileName))
+            if (!FileExists(image.FileName))
             {
-                await using (var file = new FileStream(Path.Join(_imagesPath, image.FileName), FileMode.Create, FileAccess.Write))
+                await using (var file = new FileStream(Path.Join(_imagesFullPath, image.FileName), FileMode.Create, FileAccess.Write))
                 {
                     await image.CopyToAsync(file);
                 }
             }
+        }
+        private bool FileExists(string filename)
+        {
+            return System.IO.File.Exists(filename);
         }
     }
 }
